@@ -1,0 +1,3 @@
+[submodule "orderup-tower-config"]
+	path = orderup-tower-config
+	url = https://gitlab.com/Tekky0001/orderup-tower-config.git

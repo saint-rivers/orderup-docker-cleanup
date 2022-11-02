@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: user-service
+  r2dbc:
+    url: r2dbc:pool:postgresql://user-database:5432/user_db
+    username: useradmin
+    password: useradmsecret
+eureka:
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+#  instance:
+#    preferIpAddress: true

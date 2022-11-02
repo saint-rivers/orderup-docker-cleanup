@@ -1,0 +1,19 @@
+server:
+  port: 5688
+
+
+spring:
+  application:
+    name: food-service
+  datasource:
+    url: jdbc:postgresql://localhost:4438/food_db
+    username: useradmin
+    password: useradmsecret
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      dialect=org:
+        hibernate:
+          dialect:
+            PostgreSQL9Dialect:show-sql: true

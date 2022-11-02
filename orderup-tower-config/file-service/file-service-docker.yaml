@@ -1,0 +1,8 @@
+server:
+  port: 6889
+
+baseUrl: http://localhost:${server.port}
+
+spring:
+  application:
+    name: file-service

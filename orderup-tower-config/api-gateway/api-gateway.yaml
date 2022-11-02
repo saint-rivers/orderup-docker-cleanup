@@ -1,0 +1,132 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: user-openapi
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/v3/api-docs
+          filters:
+            - RewritePath=/users/(?<path>.*), /$\{path}
+
+
+
+        - id: file-openapi
+          uri: lb://FILE-SERVICE
+          predicates:
+            - Path=/files/v3/api-docs
+          filters:
+            - RewritePath=/files/(?<path>.*), /$\{path}
+
+
+        - id: mail-openapi
+          uri: lb://MAIL-SERVICE
+          predicates:
+            - Path=/mails/v3/api-docs
+          filters:
+            - RewritePath=/mails/(?<path>.*), /$\{path}
+
+        - id: notification-openapi
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/notifications/v3/api-docs
+          filters:
+            - RewritePath=/notifications/(?<path>.*), /$\{path}
+
+
+
+
+        - id: food-openapi
+          uri: lb://FOOD-SERVICE
+          predicates:
+            - Path=/foods/v3/api-docs
+          filters:
+            - RewritePath=/foods/(?<path>.*), /$\{path}
+
+
+
+        - id: order-openapi
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/orders/v3/api-docs
+          filters:
+            - RewritePath=/orders/(?<path>.*), /$\{path}
+
+
+
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/v1/users/**, /api/v1/groups/**
+
+        #        - id: keycloak-client
+        #          uri: lb://KEYCLOAK_CLIENT
+        #          predicates:
+        #            - Path=/api/user/**, /api/role/**, /api/group/**, /v3/api-docs
+
+
+        - id: file-service
+          uri: lb://FILE-SERVICE
+          predicates:
+            - Path=/api/v1/files/**
+
+
+        - id: mail-service
+          uri: lb://MAIL-SERVICE
+          predicates:
+            - Path=/api/v1/mails/**
+
+
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/v1/notifications/**
+
+
+        - id: food-service
+          uri: lb://FOOD-SERVICE
+          predicates:
+            - Path=/api/v1/foods/categories/**, /api/v1/foods/items/**, /api/v1/foods/favorites/**
+
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/v1/orders/**, /api/v1/bills/**, /api/v1/carts/**
+
+
+        - id: openapi
+          uri: http://localhost:${server.port}
+          predicates:
+            - Path=/v3/api-docs/**
+          filters:
+            - RewritePath=/v3/api-docs/(?<path>.*), /$\{path}/v3/api-docs
+
+server:
+  port: 8080
+
+#management:
+#  endpoint:
+#    gateway.enabled: true # default value
+#  endpoints:
+#    web.exposure.include: gateway
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: users
+        url: /v3/api-docs/users
+      - name: files
+        url: /v3/api-docs/files
+      - name: mails
+        url: /v3/api-docs/mails
+      - name: notifications
+        url: /v3/api-docs/notifications
+      - name: foods
+        url: /v3/api-docs/foods
+      - name: orders
+        url: /v3/api-docs/orders

@@ -1,0 +1,24 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: keycloak-client
+
+keycloak:
+  bearer-only: true
+  ssl-required: external
+  use-resource-role-mappings: true
+
+  realm: orderup-tower
+  resource: orderup-microservices
+  auth-server-url: https://tos.orderup.homes/auth/ #docker container
+#  auth-server-url: https://139.162.51.151:8443/auth/realms/orderup-tower/protocol/openid-connect/auth
+#  auth-server-url: http://keycloak-server-demo:8080/auth/realms/orderup-tower/protocol/openid-connect/auth
+  credentials:
+    username: 'user1'
+    password: 'password'
+    client-id: 'orderup-microservices' # admin account for creating users
+    secret: 'zJH8nAtWe5yCTwByCem71DRY119QAsHb'
+#    secret: '1M3ztr6wNWkqxGLKKed3WbN8fa3Xd3xq'
+    provider: secret

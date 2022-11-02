@@ -1,0 +1,18 @@
+server:
+  port: 7789
+
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: jdbc:postgresql://notification-database:5432/notification_db
+    username: useradmin
+    password: useradmsecret
+  jpa:
+    hibernate:
+      ddl-auto: update
+      dialect=org:
+        hibernate:
+          dialect:
+            PostgreSQL9Dialect:show-sql: true

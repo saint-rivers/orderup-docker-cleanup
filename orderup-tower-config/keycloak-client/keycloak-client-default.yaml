@@ -1,0 +1,20 @@
+server:
+  port: 7071
+
+spring:
+  application:
+    name: keycloak-client
+
+keycloak:
+  realm: orderup-tower
+  resource: orderup-microservices
+  auth-server-url: https://tos.orderup.homes/auth/
+#  auth-server-url: https://139.162.51.151:8443/auth/realms/orderup-tower/protocol/openid-connect/auth
+  credentials:
+    username: 'user1'
+    password: 'password'
+    client-id: 'orderup-microservices' # admin account for creating users
+    secret: 'zJH8nAtWe5yCTwByCem71DRY119QAsHb'
+    provider: secret
+
+    

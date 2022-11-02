@@ -1,0 +1,33 @@
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    serviceUrl:
+      defaultZone: http://eureka-server:8761/eureka/
+    enabled: true
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+  devtools:
+    add-properties: disable
+
+spring:
+
+#security
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+#          issuer-uri: http://keycloak-server-demo:8800/auth/realms/orderup-tower
+#          jwk-set-uri: http://keycloak-server-demo:8800/auth/realms/orderup-tower/protocol/openid-connect/certs
+          issuer-uri: https://tos.orderup.homes/auth/realms/orderup-tower
+          jwk-set-uri: https://tos.orderup.homes/auth/realms/orderup-tower/protocol/openid-connect/certs
+  zipkin:
+    base-url: http://zipkin-server:9411/
+
+springdoc:
+  swagger-ui:
+    oauth:
+      realm: 'orderup-tower'
+      clientId: 'orderup-microservices'
+      clientSecret: 'zJH8nAtWe5yCTwByCem71DRY119QAsHb'

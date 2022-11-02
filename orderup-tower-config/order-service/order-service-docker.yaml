@@ -1,0 +1,19 @@
+server:
+  port: 5689
+
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: jdbc:postgresql://order-database:5432/order_db
+    username: useradmin
+    password: useradmsecret
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      dialect=org:
+        hibernate:
+          dialect:
+            PostgreSQL9Dialect:show-sql: true

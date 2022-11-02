@@ -1,0 +1,11 @@
+server:
+  port: 7072
+
+spring:
+  application:
+    name: task-service
+  r2dbc:
+    url: r2dbc:pool:postgresql://localhost:4433/task_db
+    username: 'taskadmin'
+    password: 'taskadmsecret'
+

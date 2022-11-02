@@ -1,0 +1,454 @@
+version: '3.8'
+
+#--------- keycloak needed env -------#
+x-database-env: &database-env
+  POSTGRES_DB: keycloak
+  POSTGRES_USER: keycloak
+  POSTGRES_PASSWORD: password
+
+x-keycloak-env: &keycloak-env
+  DB_VENDOR: POSTGRES
+  DB_ADDR: keycloak-database-demo
+  DB_DATABASE: keycloak
+  DB_USER: keycloak
+  DB_SCHEMA: public
+  DB_PASSWORD: password
+  KEYCLOAK_USER: admin
+  KEYCLOAK_PASSWORD: kcpassword
+  KEYCLOAK_LOGLEVEL: DEBUG
+  #  KEYCLOAK_IMPORT: /opt/realm.json -Dkeycloak.profile.feature.upload_scripts=enabled
+  ROOT_LOGLEVEL: DEBUG
+
+#-------------------------------------#
+
+x-spring-healthcheck: &actuator-healthcheck
+  healthcheck:
+    test: "curl --fail --silent http://localhost:8080/actuator/health | grep UP || exit 1"
+    retries: 5
+    interval: 10s
+    timeout: 5s
+
+x-jre-image: &jre-image
+  entrypoint: [ "java", "-jar", "/opt/root.jar" ]
+  image: eclipse-temurin:17.0.3_7-jre
+
+x-postgres-config: &postgres-config
+  image: postgres:14.4-alpine
+  environment:
+    PGDATA: /var/lib/postgresql/data
+  healthcheck:
+    test: [ "CMD","pg_isready","-U","postgres" ]
+    interval: 10s
+    timeout: 5s
+    retries: 3
+  restart: unless-stopped
+
+x-microservice-depends_on: &microservice-dependencies
+#  zipkin-server:
+#    condition: service_healthy
+#  config-server:
+#    condition: service_healthy
+#  eureka-server:
+#    condition: service_healthy
+  depends_on:
+    - zipkin-server
+    - config-server
+    - eureka-server
+#  -
+
+x-default-configserver: &config-client
+  SPRING_PROFILES_ACTIVE: default,docker
+  SPRING_CONFIG_IMPORT: "configserver:http://config-server:8080"
+
+volumes:
+  user_data:
+  notification_data:
+  food_data:
+  order_data:
+  keycloak_data:
+  grafana_data:
+  prometheus_data: {}
+
+services:
+
+  #------- keycloak server-------#
+#  keycloak-database:
+#    image: postgres:14.4-alpine
+#    restart: unless-stopped
+#    volumes:
+#      - keycloak_data:/var/lib/postgresql/data
+#    container_name: keycloak-database-demo
+#    healthcheck:
+#      test: [ "CMD","pg_isready","-U","keycloak" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 3
+#    environment:
+#      <<: *database-env
+#    ports:
+#      - "5555:5432"
+#
+#  keycloak-service:
+#    image: jboss/keycloak:16.1.1
+#    restart: unless-stopped
+#    container_name: keycloak-server-demo
+#    #    volumes:
+#    #      - ../keycloak/realm.json:/opt/realm.json
+#    environment:
+#      <<: *keycloak-env
+#    ports:
+#      - "8800:8080"
+#      - "8443:8443"
+#    depends_on:
+#      - keycloak-database
+#    healthcheck:
+#      test:
+#        [
+#          "CMD",
+#          "curl",
+#          "--fail",
+#          "http://localhost:8080/auth/realms/orderup-tower"
+#        ]
+#      interval: 20s
+#      timeout: 3s
+#      start_period: 10s
+#      retries: 3
+  #--------------------------------------#
+
+  config-server:
+    <<: *jre-image
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8080/actuator/health | grep UP || exit 1"
+      retries: 5
+      interval: 20s
+      timeout: 10s
+    container_name: config-server
+    depends_on:
+      - zipkin-server
+    volumes:
+      - ./config-server/build/libs/config-server-1.0.1.jar:/opt/root.jar
+    environment:
+      SPRING_PROFILES_ACTIVE: default,docker
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8889:8080"
+
+
+  user-database:
+    <<: *postgres-config
+    container_name: user-database
+    ports:
+      - "4434:5432"
+    environment:
+      - POSTGRES_DB=user_db
+      - POSTGRES_USER=useradmin
+      - POSTGRES_PASSWORD=useradmsecret
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+
+  notification-database:
+    <<: *postgres-config
+    container_name: notification-database
+    ports:
+      - "4436:5432"
+    environment:
+      - POSTGRES_DB=notification_db
+      - POSTGRES_USER=useradmin
+      - POSTGRES_PASSWORD=useradmsecret
+    volumes:
+      - notification_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+
+
+  food-database:
+    <<: *postgres-config
+    container_name: food-database
+    ports:
+      - "4438:5432"
+    environment:
+      - POSTGRES_DB=food_db
+      - POSTGRES_USER=useradmin
+      - POSTGRES_PASSWORD=useradmsecret
+    volumes:
+      - food_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+
+
+  order-database:
+    <<: *postgres-config
+    container_name: order-database
+    ports:
+      - "4439:5432"
+    environment:
+      - POSTGRES_DB=order_db
+      - POSTGRES_USER=useradmin
+      - POSTGRES_PASSWORD=useradmsecret
+    volumes:
+      - order_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+
+
+  eureka-server:
+    <<: *jre-image
+    container_name: eureka-server
+    volumes:
+      - ./eureka-server/build/libs/eureka-server-1.0.1.jar:/opt/root.jar
+    environment:
+      SPRING_PROFILES_ACTIVE: native,docker
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8080"
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+    depends_on:
+      - config-server
+    hostname: eureka-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8761/actuator/health | grep UP || exit 1"
+      retries: 3
+      interval: 20s
+      timeout: 10s
+    restart: unless-stopped
+
+  api-gateway:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+    container_name: api-gateway
+    volumes:
+      - ./api-gateway/build/libs/api-gateway-1.0.1.jar:/opt/root.jar
+#    depends_on:
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    environment:
+      <<: *config-client
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  keycloak-client:
+    container_name: keycloak-client
+    <<: *jre-image
+    <<: *actuator-healthcheck
+#    deploy:
+#      restart_policy:
+#        condition: on-failure
+#        delay: 3s
+#        max_attempts: 10
+#        window: 20s
+#    depends_on:
+#      <<: *microservice-dependencies
+    #    container_name: keycloak-client
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    volumes:
+      - ./keycloak-client/build/libs/keycloak-client-1.0.1.jar:/opt/root.jar
+    environment:
+      <<: *config-client
+    ports:
+      - "6068-6069:8080"
+    restart: on-failure
+
+  user-service:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+#    depends_on:
+#      <<: *microservice-dependencies
+#      keycloak-client:
+#        condition: service_healthy
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    volumes:
+      - ./user-service/build/libs/user-service-1.0.1.jar:/opt/root.jar
+    environment:
+      <<: *config-client
+    ports:
+      - "6070-6071:8080"
+    restart: on-failure
+
+
+
+
+  order-service:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    volumes:
+      - ./order-service/build/libs/order-service-1.0.1.jar:/opt/root.jar
+    environment:
+      <<: *config-client
+    ports:
+      - "6040-6041:8080"
+    restart: on-failure
+
+
+
+  food-service:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    volumes:
+      - ./food-service/build/libs/food-service-1.0.1.jar:/opt/root.jar
+    environment:
+      <<: *config-client
+    ports:
+      - "6020-6021:8080"
+    restart: on-failure
+
+
+
+
+
+  file-service:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+    container_name: file-service
+    volumes:
+      - ./file-service/build/libs/file-service-1.0.1.jar:/opt/root.jar
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    environment:
+      <<: *config-client
+    ports:
+      - "6001-6002:8080"
+    restart: on-failure
+
+
+
+
+#  rabbitmq-local:
+#    container_name:  rabbitmq-local
+#    image: rabbitmq:3-management
+#    restart: always
+#    ports:
+#      - "5672:5672"
+#      - "15672:15672"
+
+
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name:   rabbitmq
+    ports:
+      - "5672:5672"
+      - "15671:15671"
+    volumes:
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+      - ./rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+
+
+  mail-service:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+    container_name: mail-service
+    volumes:
+      - ./mail-service/build/libs/mail-service-1.0.1.jar:/opt/root.jar
+    depends_on:
+      #      - zipkin-server
+      - eureka-server
+      - config-server
+      - rabbitmq
+    environment:
+      SPRING_PROFILES_ACTIVE: default,docker
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8080"
+      SPRING_RABBITMQ_HOST: rabbitmq
+    #      <<: *config-client
+    ports:
+      - "5011-5012:8080"
+    restart: on-failure
+
+
+
+
+  notification-service:
+    <<: *jre-image
+    <<: *actuator-healthcheck
+    depends_on:
+      - zipkin-server
+      - config-server
+      - eureka-server
+    volumes:
+      - ./notification-service/build/libs/notification-service-1.0.1.jar:/opt/root.jar
+    environment:
+      <<: *config-client
+    ports:
+      - "6050-6051:8080"
+    restart: on-failure
+
+
+
+
+
+
+
+
+  zipkin-server:
+    image: openzipkin/zipkin:2.23
+    container_name: zipkin-server
+    restart: unless-stopped
+    expose:
+      - '9411'
+    ports:
+      - '9411:9411'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+
+  grafana:
+    image: grafana/grafana:7.5.7
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - grafana_data:/var/lib/grafana

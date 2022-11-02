@@ -1,0 +1,50 @@
+spring:
+  # rabbitmq
+  rabbitmq:
+    host:      rabbitmq             # host to connect (name container)
+    port:      5672                  # default port of application with rabbitmq
+    username:    guest             # default username (guest)
+    password:    guest             # default password (guest)
+    listener:
+      simple:
+        retry:
+          enabled: true        # enabled request
+          initial-interval: 2s # run 2s after request
+          max-interval: 20s    # max 20s with request
+          max-attempts: 5      # retried maximum of 5 times
+          multiplier: 2        # used to grow the reconnection delay value in 2s
+  #mail sender:
+  mail:
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: 'true'   # Some SMTP servers require a TLS connection to enable a TLS-protected connection. ( TLS port 587)
+            required: 'true' # means TLS is supported and TLS connection can be used. And for secure connection, both the sender and recipient must use TLS
+          ssl:
+            trust: 'smtp.gmail.com' # make your Gmail account accept less secure apps
+          auth: 'true'  # true, attempt to authenticate the user using the AUTH command. Defaults to false
+    host: smtp.gmail.com  # server address (You can log in using your full Gmail email address and your Google password.)
+    username: kshrd.orderup@gmail.com
+    password: rrmzbmuvrspcnyly # password follow by 2-step verification
+    port: '587'
+    default-encoding: utf-8 # define special characters and symbols on the web and in emails
+    protocol: smtp # internet standard communication protocol for electronic mail transmission. Mail servers and other message transfer agents use SMTP to send and receive mail messages
+
+
+
+  application:
+    name: mail-service
+
+
+
+
+
+
+
+
+
+server:
+  port: 8093
+
+

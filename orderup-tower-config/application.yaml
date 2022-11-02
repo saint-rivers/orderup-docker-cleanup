@@ -1,0 +1,30 @@
+spring:
+
+  #security
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+#          issuer-uri: http://keycloak-server-demo:8800/auth/realms/orderup-tower
+#          jwk-set-uri: http://keycloak-server-demo:8800/auth/realms/orderup-tower/protocol/openid-connect/certs
+          issuer-uri: https://tos.orderup.homes/auth/realms/orderup-tower
+          jwk-set-uri: https://tos.orderup.homes/auth/realms/orderup-tower/protocol/openid-connect/certs
+springdoc:
+  swagger-ui:
+    oauth:
+      realm: 'orderup-tower'
+      clientId: 'orderup-microservices'
+
+      clientSecret: 'zJH8nAtWe5yCTwByCem71DRY119QAsHb'
+#      clientSecret: '1M3ztr6wNWkqxGLKKed3WbN8fa3Xd3xq'
+
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"

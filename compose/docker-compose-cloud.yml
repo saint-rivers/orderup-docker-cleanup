@@ -1,0 +1,47 @@
+version: "3.3"
+
+networks:
+  default:
+    name: orderup
+    external: true
+
+services:
+
+  config-server:
+    build: 
+      context: ../config-server
+    healthcheck:
+      test: "curl --fail http://localhost:8080/actuator/health | grep UP || exit 1"
+      retries: 5
+      interval: 20s
+      timeout: 10s
+    container_name: config-server
+    depends_on:
+      - zipkin-server
+    environment:
+      SPRING_PROFILES_ACTIVE: default,docker
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    ports:
+      - "8889:8080"
+
+  eureka-server:
+    build:
+      context: ../eureka-server
+    container_name: eureka-server
+    environment:
+      SPRING_PROFILES_ACTIVE: native,docker
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8080"
+    depends_on:
+      - config-server
+      - zipkin-server
+    hostname: eureka-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8761/actuator/health | grep UP || exit 1"
+      retries: 3
+      interval: 20s
+      timeout: 10s
+    restart: unless-stopped

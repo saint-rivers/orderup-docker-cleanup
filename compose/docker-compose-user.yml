@@ -1,0 +1,50 @@
+version: "3.3"
+
+volumes:
+  user_data:
+
+networks:
+  default:
+    name: orderup
+    external: true
+
+services:
+  user-database:
+    image: postgres:14.4-alpine
+    healthcheck:
+      test: [ "CMD","pg_isready","-U","postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    container_name: user-database
+    ports:
+      - "4434:5432"
+    environment:
+      - PGDATA=/var/lib/postgresql/data
+      - POSTGRES_DB=user_db
+      - POSTGRES_USER=useradmin
+      - POSTGRES_PASSWORD=useradmsecret
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ../user-service
+    ports:
+      - "6673:8080"
+    container_name: user-service
+    depends_on:
+      - config-server
+      - zipkin-server
+      - rabbitmq
+      - user-database
+    environment:
+      SPRING_PROFILES_ACTIVE: default,docker
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8080"
+    restart: on-failure
+    healthcheck:
+      test: "curl --fail http://localhost:8080/actuator/health | grep UP || exit 1"
+      retries: 5
+      interval: 10s
+      timeout: 5s
